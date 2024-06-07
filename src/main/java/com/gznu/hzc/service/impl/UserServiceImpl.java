@@ -9,6 +9,7 @@ import com.gznu.hzc.model.request.SignInRequest;
 import com.gznu.hzc.model.request.UserLoginRequest;
 import com.gznu.hzc.model.vo.UserVo;
 import com.gznu.hzc.service.UserService;
+import io.swagger.models.auth.In;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -137,9 +138,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public List<UserVo> searchUsers(String username) {
-        if (StringUtils.isBlank(username)) {
-            return null;
-        }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.like("username", username);
         List<User> userList = this.list(queryWrapper);
@@ -152,6 +150,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return null;
         }
         return userVoList;
+    }
+
+    @Override
+    public UserVo getCurrent(HttpServletRequest request) {
+        if (BeanUtil.isEmpty(request)) {
+            return null;
+        }
+        Object objectUser = request.getSession().getAttribute(USER_LOGIN_STATUS);
+        User user = (User) objectUser;
+        Long userId = user.getId();
+        User userResult = userMapper.selectById(userId);
+        if (BeanUtil.isEmpty(userResult)) {
+            return null;
+        }
+        return cleanUser(userResult);
+    }
+
+    @Override
+    public Integer logout(HttpServletRequest request) {
+        //移除登录态
+        request.getSession().removeAttribute(USER_LOGIN_STATUS);
+        return 1;
     }
 }
 

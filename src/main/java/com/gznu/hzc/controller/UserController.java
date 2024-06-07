@@ -13,7 +13,7 @@ import com.gznu.hzc.model.request.SignInRequest;
 import com.gznu.hzc.model.request.UserLoginRequest;
 import com.gznu.hzc.model.vo.UserVo;
 import com.gznu.hzc.service.UserService;
-import lombok.Data;
+import com.sun.xml.internal.bind.v2.TODO;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,23 +48,45 @@ public class UserController {
         return userService.userLogin(userLoginRequest, request);
     }
 
-    @GetMapping("/search")
-    public List<UserVo> searchUsers(String username, HttpServletRequest request) {
-        if (StringUtils.isBlank(username)) {
+    @PostMapping("/logout")
+    public Integer userLogout(HttpServletRequest request) {
+        if (BeanUtil.isEmpty(request)) {
             return null;
         }
+        return userService.logout(request);
+    }
+
+    @GetMapping("/search")
+    public List<UserVo> searchUsers(String username, HttpServletRequest request) {
         Boolean isAdmin = isAdmin(request);
         if (!isAdmin) {
             return new ArrayList<>();
         }
+        //TODO 测试流式处理
         return userService.searchUsers(username).stream().map(userVo -> {
             userVo.setUsername("Hhzc");
             return userVo;
         }).collect(Collectors.toList());
     }
 
-    @DeleteMapping("/delete/{id}")
-    public Boolean deleteUser(@PathVariable("id") Long id, HttpServletRequest request) {
+//    TODO 搜索优化
+    @GetMapping("/search/all")
+    public List<UserVo> searchUserList(HttpServletRequest request) {
+        Boolean isAdmin = isAdmin(request);
+        if (!isAdmin) {
+            return new ArrayList<>();
+        }
+        List<User> userList = userService.list();
+        List<UserVo> userVoList = new ArrayList<>();
+        userList.forEach(user -> {
+            userVoList.add(userService.cleanUser(user));
+        });
+        return userVoList;
+    }
+
+
+    @DeleteMapping("/delete")
+    public Boolean deleteUser(Long id, HttpServletRequest request) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         if (id != null) {
             queryWrapper.eq("id", id);
@@ -74,6 +96,22 @@ public class UserController {
             return null;
         }
         return userService.removeById(queryWrapper);
+    }
+
+    @GetMapping("/current")
+    public UserVo getCurrentUser(HttpServletRequest request) {
+        if (BeanUtil.isEmpty(request)) {
+            return null;
+        }
+        Boolean isAdmin = isAdmin(request);
+        if (!isAdmin) {
+            return null;
+        }
+        UserVo currentUserVo = userService.getCurrent(request);
+        if (BeanUtil.isEmpty(currentUserVo)) {
+            return null;
+        }
+        return currentUserVo;
     }
 
     public Boolean isAdmin(HttpServletRequest request) {

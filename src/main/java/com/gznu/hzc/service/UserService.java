@@ -44,4 +44,18 @@ public interface UserService extends IService<User> {
      * @return 返回用户列表
      */
     List<UserVo> searchUsers(String username);
+
+    /**
+     * 获取当前用户
+     * @param request
+     * @return 返回用户信息
+     */
+    UserVo getCurrent(HttpServletRequest request);
+
+    /**
+     * 用户退出
+     * @param request
+     * @return
+     */
+    Integer logout(HttpServletRequest request);
 }
